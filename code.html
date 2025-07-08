@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Escanor: The One</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #000;
+        }
+        
+        #game-container {
+            position: relative;
+            width: 800px;
+            height: 600px;
+            border: 5px solid #4a2b15;
+        }
+        
+        .dialogue-box {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background-image: url('TextBubble.png'); /* Dialogue bubble background */
+            background-size: cover;
+            padding: 15px;
+            color: black;
+            font-size: 16px;
+            display: none;
+        }
+        
+        .character-name {
+            color: #f5a142;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .health-bar {
+            height: 20px;
+            background-color: #333;
+            margin: 5px 0;
+            position: relative;
+        }
+        
+        .health-fill {
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        
+        #player-health .health-fill {
+            background-color: #d62828;
+            width: 100%;
+        }
+        
+        #enemy-health .health-fill {
+            background-color: #6a040f;
+            width: 100%;
+        }
+        
+        .character-container {
+            position: absolute;
+            bottom: 150px; /* Ajustar para que estén en la parte inferior */
+        }
+        
+        #player-character {
+            left: 100px;
+        }
+        
+        #enemy-character {
+            right: 100px;
+        }
+        
+        .attack-button {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background-color: #d62828;
+            color: white;
+            border: none;
+            font-family: inherit;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .attack-button:hover {
+            background-color: #f77f00;
+        }
+        
+        .time-indicator {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 20px;
+        }
+        
+        .background {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            z-index: -1; /* Para que el fondo esté detrás de los personajes */
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .appear {
+            animation: appear 1s forwards;
+        }
+        
+        @keyframes appear {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="background" class="background night-background"></div>
+        <canvas id="game-canvas"></canvas>
+        
+        <div id="player-character" class="character-container">
+            <div class="character-name">Escanor (Noche)</div>
+            <div id="player-health" class="health-bar">
+                <div class="health-fill"></div>
+            </div>
+            <img src="WeakEscanor.png" alt="Escanor in weak nighttime form" width="150" height="300">
+        </div>
+        
+        <div id="enemy-character" class="character-container">
+            <div class="character-name">Demonio Mujer</div>
+            <div id="enemy-health" class="health-bar">
+                <div class="health-fill"></div>
+            </div>
+            <img src="FirstDemon.png" alt="Female demon with spiked tail" width="150" height="300">
+        </div>
+        
+        <div class="dialogue-box" id="dialogue-box">
+            <div class="dialogue-text"></div>
+            <button class="continue-button" onclick="nextDialogue()">Continuar</button>
+        </div>
+        
+        <div class="time-indicator">NOCHE</div>
+        
+        <button class="attack-button" onclick="playerAttack()">ATACAR</button>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <script>
+        // P5.js variables
+        let escanorNightImg, escanorDayImg, escanorFinalImg;
+        let firstDemonImg, finalDemonImg;
+        let nightBgImg, dayBgImg, finalBgImg;
+        let dialogBubbleImg;
+
+        function preload() {
+            escanorNightImg = loadImage('WeakEscanor.png');
+            escanorDayImg = loadImage('DayEscanor.png');
+            escanorFinalImg = loadImage('Escanor.png');
+            firstDemonImg = loadImage('FirstDemon.png');
+            finalDemonImg = loadImage('FinalDemon.png');
+            nightBgImg = loadImage('NightScene.png');
+            dayBgImg = loadImage('Day.png');
+            finalBgImg = loadImage('Escena.webp');
+            dialogBubbleImg = loadImage('TextBubble.png');
+        }
+
+        function setup() {
+            createCanvas(800, 600);
+            // Initialize game elements here
+        }
+
+        function draw() {
+            // Main game loop
+            background(nightBgImg);
+            
+            // Draw characters based on game state
+            if (gameState.phase === 'night') {
+                image(escanorNightImg, 100, 300, 150, 300);
+                image(firstDemonImg, 550, 300, 150, 300);
+            } else if (gameState.phase === 'day') {
+                image(escanorDayImg, 100, 300, 150, 300);
+                image(firstDemonImg, 550, 300, 150, 300);
+            }
+            
+            // Draw HUD elements
+            drawHealthBars();
+        }
+        // P5.js variables
+        let escanorNightImg, escanorDayImg, escanorFinalImg;
+        let firstDemonImg, finalDemonImg;
+        let nightBgImg, dayBgImg, finalBgImg;
+        let dialogBubbleImg;
+
+        function preload() {
+            escanorNightImg = loadImage('WeakEscanor.png');
+            escanorDayImg = loadImage('DayEscanor.png');
+            escanorFinalImg = loadImage('Escanor.png');
+            firstDemonImg = loadImage('FirstDemon.png');
+            finalDemonImg = loadImage('FinalDemon.png');
+            nightBgImg = loadImage('NightScene.png');
+            dayBgImg = loadImage('Day.png');
+            finalBgImg = loadImage('Escena.webp');
+            dialogBubbleImg = loadImage('TextBubble.png');
+        }
+
+        function setup() {
+            createCanvas(800, 600);
+            // Initialize game elements here
+        }
+
+        function draw() {
+            // Main game loop
+            background(nightBgImg);
+            
+            // Draw characters based on game state
+            if (gameState.phase === 'night') {
+                image(escanorNightImg, 100, 300, 150, 300);
+                image(firstDemonImg, 550, 300, 150, 300);
+            } else if (gameState.phase === 'day') {
+                image(escanorDayImg, 100, 300, 150, 300);
+                image(firstDemonImg, 550, 300, 150, 300);
+            }
+            
+            // Draw HUD elements
+            drawHealthBars();
+        }
+        // Estado del juego
+        const gameState = {
+            playerHealth: 100,
+            enemyHealth: 100,
+            phase: 'night',
+            dialogueIndex: 0,
+            dialogues: [
+                {
+                    speaker: 'Demonio Mujer',
+                    text: 'Huh? ¿Quién eres tú? Eres tú de nuevo humano?~'
+                },
+                {
+                    speaker: 'Demonio Mujer',
+                    text: 'Dime, verdad que no eres humano verdad?'
+                },
+                {
+                    speaker: 'Escanor',
+                    text: 'Quién lo diría, un ser inferior ante mi? Quién lo diría que te quedarías para tan solo morir.'
+                },
+                {
+                    speaker: 'Escanor',
+                    text: 'En fin, respondiendo tu pregunta... Soy Humano. Pero también soy aquel que se alza encima de todas las razas.'
+                },
+                {
+                    speaker: 'Demonio Mujer',
+                    text: '¡Qué orgulloso eres humano~!'
+                },
+                {
+                    speaker: 'Escanor',
+                    text: 'Sí porque eso soy. Soy Escanor, el león de los 7 pecados capitales.'
+                },
+                {
+                    speaker: 'Escanor',
+                    text: 'Puedes llamarme... majestad Escanor.'
+                },
+            ]
+        };
+
+        // Elementos del DOM
+        const playerHealthFill = document.querySelector('#player-health .health-fill');
+        const enemyHealthFill = document.querySelector('#enemy-health .health-fill');
+        const dialogueBox = document.getElementById('dialogue-box');
+        const dialogueText = document.querySelector('.dialogue-text');
+        const timeIndicator = document.querySelector('.time-indicator');
+        const background = document.getElementById('background');
+        
+        // Draw health bars
+        function drawHealthBars() {
+            // Player health
+            fill(51); // Background
+            rect(100, 250, 150, 20);
+            fill(214, 40, 40); // Fill
+            rect(100, 250, gameState.playerHealth * 1.5, 20);
+            
+            // Enemy health
+            fill(51); // Background
+            rect(550, 250, 150, 20);
+            fill(106, 4, 15); // Fill
+            rect(550, 250, gameState.enemyHealth * 1.5, 20);
+        }
+        
+        // Mostrar diálogo
+        function showDialogue(speaker, text) {
+            dialogueBox.style.display = 'block';
+            dialogueText.innerHTML = `<div class="character-name">${speaker}</div><div>${text}</div>`;
+        }
+        
+        // Siguiente diálogo
+        function nextDialogue() {
+            if (gameState.dialogueIndex < gameState.dialogues.length) {
+                const dialogue = gameState.dialogues[gameState.dialogueIndex];
+                showDialogue(dialogue.speaker, dialogue.text);
+                gameState.dialogueIndex++;
+            } else {
+                dialogueBox.style.display = 'none';
+                transformToDay();
+            }
+        }
+        
+        // Ataque del jugador
+        function playerAttack() {
+            if (gameState.phase === 'night') {
+                // En la noche el jugador es débil
+                gameState.enemyHealth -= 10;
+                gameState.playerHealth -= 15;
+                
+                if (gameState.playerHealth <= 0) {
+                    gameState.playerHealth = 0;
+                    setTimeout(() => {
+                        document.querySelector('#player-character img').src = "WeakEscanor.PNG"; // Imagen de derrota
+                        showDialogue('Demonio Mujer', '*Ríe* Patético humano... ¿Así que este es tu límite?');
+                        setTimeout(nextDialogue, 2000);
+                    }, 500);
+                } else if (gameState.enemyHealth <= 0) {
+                    gameState.enemyHealth = 0;
+                    alert('¡Has ganado! (Esto será implementado en el juego completo)');
+                }
+            } else {
+                // En el día el jugador es poderoso
+                gameState.enemyHealth -= 30;
+                
+                if (gameState.enemyHealth <= 0) {
+                    gameState.enemyHealth = 0;
+                    alert('¡Demonio derrotado! (Esto será implementado en el juego completo)');
+                }
+            }
+            
+            updateHealthBars();
+        }
+        
+        // Transformación a día
+        function transformToDay() {
+            gameState.phase = 'day';
+            background.style.backgroundImage = "url('Day.png')"; // Daylight background
+            timeIndicator.textContent = 'DÍA';
+            
+            document.querySelector('#player-character img').src = "DayEscanor.png"; // Escanor in powerful form
+            gameState.playerHealth = 150; // Recupera salud en forma fuerte
+            updateHealthBars();
+            
+            // Habilita el modo "The One"
+            setTimeout(() => {
+                showDialogue('Escanor', '¡Dices que mis ataques no tienen efecto sobre ti?');
+                setTimeout(() => {
+                    showDialogue('Escanor', '¿Y quién lo decidió?');
+                    setTimeout(() => {
+                        showDialogue('Demonio Mujer', '¡Jamás vi su ataque contra mi!');
+                        setTimeout(() => {
+                            showDialogue('Demonio Mujer', '¿Quién es este maldito humano? Su poder es más elevado incluso que antes!');
+                            setTimeout(() => {
+                                background.style.backgroundImage = "url('Escena.webp')";
+                                showDialogue('Escanor', 'Ahora sol cruel... soy el único que decide. Muere.');
+                                setTimeout(() => {
+                                    // Animación de aparición de Escanor
+                                    const escanorImage = document.createElement('img');
+                                    escanorImage.src = "Escanor.png";
+                                    escanorImage.alt = "Escanor in his most powerful form";
+                                    escanorImage.width = 150;
+                                    escanorImage.height = 300;
+                                    escanorImage.classList.add('appear');
+                                    document.getElementById('player-character').appendChild(escanorImage);
+                                    
+                                    setTimeout(() => {
+                                        document.querySelector('#enemy-character img').src = "FinalDemon.png"; // Defeated demon
+                                        gameState.enemyHealth = 0;
+                                        updateHealthBars();
+                                    }, 2000);
+                                }, 2000);
+                            }, 2000);
+                        }, 2000);
+                    }, 2000);
+                }, 2000);
+            }, 1000);
+        }
+        
+        // Inicialización
+        updateHealthBars();
+        background.style.backgroundImage = "url('NightScene.png')"; // Nighttime background
+    </script>
+</body>
+</html>
